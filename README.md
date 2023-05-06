@@ -15,7 +15,6 @@ pip3 install protobuf==3.19.4
 ## Install `cyber_record` for ACAV
 Install `cyber_record`, a cyber record file offline parse tool, by the following command: 
 ```shell
-pip3 install protobuf==3.19.4
 pip3 install cyber_record
 ```
 
