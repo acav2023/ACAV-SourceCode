@@ -2,13 +2,13 @@ Frame #0-4:
     No <Planning> Faults Discovered: EV keeps safe distance from NPCs, or EV has almost stopped
 
 Frame #5-9: 
-      ** Critical <planning> events!**
     In <Planning> Module: Wrong speed planning, although identifying drivable area correctly
         Improper speed planning, too fast or too slow
     In <Control> Module: EV is skidding sometimes
+    ** Fault Info **
+        Please check @func GetSpeedLimits() in speed_limit_decider.cc or , @func DEFINE_double() in planning_gflags.cc of Planning Module
 
 Frame #10-29: 
-      ** Critical <control> events! **
     In <Planning> Module and <Prediction> Module: Wrong identification of drivable area, caused by wrong trajectory prediction
         For NPC "2": Wrong priority prediction
         For NPC "2": Wrong trajectory prediction
@@ -16,12 +16,16 @@ Frame #10-29:
             Illegal and unsafe, EV is on the junction now
         Improper speed planning, too fast or too slow
     In <Control> Module: EV is skidding sometimes
+    ** Fault Info **
+        Please check @func AssignIgnoreLevel() in obstacle_prioritizer.cc of Prediction Module
+        Wrong trajectory prediction caused by wrong priority prediction
 
 Frame #30-52: 
-      ** Critical <control> events! **
     In <Planning> Module: Wrong speed planning, although identifying drivable area correctly
         Improper speed planning, too fast or too slow
     In <Control> Module: EV is skidding sometimes
+    ** Fault Info **
+        Please check @func GetSpeedLimits() in speed_limit_decider.cc or , @func DEFINE_double() in planning_gflags.cc of Planning Module
 
 Frame #53:
     Accident!

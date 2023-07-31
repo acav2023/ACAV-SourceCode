@@ -6,7 +6,7 @@ from ev_behavior_checking_utils import ahead_priority_checking, next_priority_ch
     obs_ignore_decision_checking, obs_follow_decision_checking, \
     obs_yield_decision_checking, obs_overtake_decision_checking, \
     common_speed_checking
-from map_parser import Map
+from map_parser import Map, is_on_lane, is_in_junction
 from vehicle_parser import ev_direction_vector
 from math import dist, sqrt
 
@@ -680,6 +680,87 @@ def ev_stgraph_obtaining(planning_msgs):
                                 cur_st.append((pt['s'], pt['t']))
         st_boundary.append(cur_st)
     return st_boundary
+
+
+def get_npc_feature(prediction_msg, map):
+    features = {}
+    if 'predictionObstacle' in prediction_msg:
+        for obs in prediction_msg['predictionObstacle']:
+            obs_feature = {}
+            obs_id_curr, type_curr, area_curr, speed_curr, priority_curr, tag_curr, is_static_curr = \
+                0, '', 'OFF_LINE', 0,  '', '', False
+            if 'perceptionObstacle' in obs and 'id' in obs['perceptionObstacle']:
+                obs_id_curr = obs['perceptionObstacle']['id']
+            if 'perceptionObstacle' in obs and 'type' in obs['perceptionObstacle']:
+                type_curr = obs['perceptionObstacle']['type']
+            if 'perceptionObstacle' in obs and 'position' in obs['perceptionObstacle']:
+                position_curr = obs['perceptionObstacle']['position']
+                obs_pos = (position_curr['x'], position_curr['y'], position_curr['z'])
+                if is_on_lane(obs_pos, map):
+                    area_curr = 'ON_LANE'
+                if is_in_junction(obs_pos, map):
+                    area_curr = 'JUNCTION'
+            if 'perceptionObstacle' in obs and 'velocity' in obs['perceptionObstacle']:
+                speed = obs['perceptionObstacle']['velocity']
+                speed_vec = (speed['x'], speed['y'], speed['z'])
+                speed_curr = dist(speed_vec, (0, 0, 0))
+            if 'priority' in obs and 'priority' in obs['priority']:
+                priority_curr = obs['priority']['priority']
+            if 'interactiveTag' in obs and 'interactiveTag' in obs['interactiveTag']:
+                tag_curr = obs['interactiveTag']['interactiveTag']
+            if 'isStatic' in obs:
+                is_static_curr = obs['isStatic']
+            obs_feature['type'], obs_feature['area'], obs_feature['speed'], obs_feature['priority'], obs_feature['tag'],\
+                obs_feature['is_static'] = type_curr, area_curr, speed_curr, priority_curr, tag_curr, is_static_curr
+            features[obs_id_curr] = obs_feature
+    return features
+
+
+def predictor_assigning(prediction_msg, map):
+    features = get_npc_feature(prediction_msg, map)
+    npc_ids = list(features.keys())
+    predictors = {}
+    for npc in npc_ids:
+        type_curr, area_curr, speed_curr, priority_curr, tag_curr, is_static = \
+            features[npc]['type'], features[npc]['area'], features[npc]['speed'], features[npc]['priority'], \
+            features[npc]['tag'], features[npc]['is_static']
+        # predictors[npc] = ''
+        predictors_curr = []
+        if 'ignore' == priority_curr:
+            predictors_curr.append('EMPTY_PREDICTOR')
+        elif is_static:
+            predictors_curr.append('EMPTY_PREDICTOR')
+        else:
+            if 'VEHICLE' == type_curr:
+                if 'INTERACTION' == tag_curr:
+                    predictors_curr.append('EMPTY_PREDICTOR')
+                if 'caution' == priority_curr:
+                    if 'JUNCTION' == area_curr:
+                        predictors_curr.append('INTERACTION_PREDICTOR')
+                    elif 'ON_LANE' == area_curr:
+                        predictors_curr.append('MOVE_SEQUENCE_PREDICTOR')
+                    else:
+                        predictors_curr.append('EXTRAPOLATION_PREDICTOR')
+                if 'OFF_LANE' == area_curr:
+                    predictors_curr.append('FREE_MOVE_PREDICTOR')
+                elif 'JUNCTION' == area_curr:
+                    predictors_curr.append('LANE_SEQUENCE_PREDICTOR')
+                else:
+                    predictors_curr.append('LANE_SEQUENCE_PREDICTOR')
+            elif 'PEDESTRIAN' == type_curr:
+                predictors_curr.append('FREE_MOVE_PREDICTOR')
+            elif 'BICYCLE' == type_curr:
+                if 'OFF_LANE' == area_curr:
+                    predictors_curr.append('FREE_MOVE_PREDICTOR')
+                else:
+                    predictors_curr.append('LANE_SEQUENCE_PREDICTOR')
+            else:
+                if 'OFF_LANE' == area_curr:
+                    predictors_curr.append('FREE_MOVE_PREDICTOR')
+                else:
+                    predictors_curr.append('LANE_SEQUENCE_PREDICTOR')
+        predictors[npc] = predictors_curr
+    return predictors
 
 
 if __name__ == '__main__':

@@ -101,7 +101,7 @@ def perception_prediction_checking(pp_vectors, clip):
     return vote
 
 def accident_segment_localizing(clips, localization_msgs, obstacle_msgs, ev):
-    a_index = first_frame_index_of_accident(localization_msgs, obstacle_msgs, ev)
+    a_index, _ = first_frame_index_of_accident(localization_msgs, obstacle_msgs, ev)
     start, end = -1, -1
     for c in clips:
         if a_index > c[0] and a_index <= c[-1]:
@@ -111,9 +111,10 @@ def accident_segment_localizing(clips, localization_msgs, obstacle_msgs, ev):
 def first_frame_index_of_accident(localization_msgs, obstacle_msgs, ev):
     msg_len = len(localization_msgs)
     for i in range(msg_len):
-        if has_accidents_current_frame(localization_msgs[i], obstacle_msgs[i], ev):
-            return i
-    return -1
+        obs_id = has_accidents_current_frame(localization_msgs[i], obstacle_msgs[i], ev)
+        if obs_id > -1:
+            return i, obs_id
+    return -1, -1
 
 def has_accidents_current_frame(localization_msg, obstacle_msg, ev):
     """
@@ -133,15 +134,15 @@ def has_accidents_current_frame(localization_msg, obstacle_msg, ev):
             distance = dist(ev_pos, obs_pos)
             # if distance < 3:
             if distance < threshold:
-                return True
+                return obs['id']
             for pts in obs['polygonPoint']:
                 pt = (pts['x'], pts['y'], pts['z'])
                 distance = dist(ev_pos, pt)
                 # if distance < 3:
                 if distance < threshold:
                     # print(obs['id'])
-                    return True
-    return False
+                    return obs['id']
+    return -1
 
 def is_near_a_crosswalk(localization_msg, map):
     """
