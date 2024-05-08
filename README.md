@@ -74,4 +74,18 @@ For your own map file, please add it to `/root_of_ACAV-SourceCode/maps/`
 
 If you use the project in your work, please consider citing the following work: 
 ```
+@inproceedings{sun2024acav,
+author = {Sun, Huijia and Poskitt, Christopher M. and Sun, Yang and Sun, Jun and Chen, Yuqi},
+title = {ACAV: A Framework for Automatic Causality Analysis in Autonomous Vehicle Accident Recordings},
+year = {2024},
+isbn = {9798400702174},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3597503.3639175},
+doi = {10.1145/3597503.3639175},
+booktitle = {Proceedings of the IEEE/ACM 46th International Conference on Software Engineering},
+articleno = {102},
+numpages = {13},
+series = {ICSE '24}
+}
 ```
